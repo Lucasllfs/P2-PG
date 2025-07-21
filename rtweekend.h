@@ -8,10 +8,10 @@
 #include <limits>
 #include <memory>
 
-#include "color.h"
 #include "interval.h"
 #include "ray.h"
 #include "vec3.h"
+#include "color.h"
 
 // C++ Std Usings
 
@@ -43,8 +43,6 @@ inline double random_double(double min, double max) {
 
 // Common Headers
 
-#include "color.h"
-#include "ray.h"
-#include "vec3.h"
+
 
 #endif
