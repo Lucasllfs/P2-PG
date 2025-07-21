@@ -1,6 +1,8 @@
 #ifndef RTWEEKEND_H
 #define RTWEEKEND_H
 
+#include <cstdlib>
+
 #include "color.h"
 #include "interval.h"
 #include "ray.h"
