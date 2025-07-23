@@ -22,23 +22,87 @@ class camera {
 
 
     void render(const hittable& world) {
-        initialize();
+    initialize();
 
-        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-        for (int j = 0; j < image_height; j++) {
-            std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-            for (int i = 0; i < image_width; i++) {
-              color pixel_color(0,0,0);
-                for (int sample = 0; sample < samples_per_pixel; sample++) {
-                    ray r = get_ray(i, j);
-                    pixel_color += ray_color(r, max_depth, world);
-                }
-                write_color(std::cout, pixel_samples_scale * pixel_color);
+// Variáveis para estimativa de tempo
+auto start_time = std::chrono::high_resolution_clock::now();
+auto last_update = start_time;
+const int update_interval = std::max(1, image_height / 50); // Atualiza a cada 2% do progresso
+
+std::clog << "Iniciando render: " << image_width << "x" << image_height 
+          << " (" << samples_per_pixel << " samples/pixel)\n";
+
+for (int j = 0; j < image_height; j++) {
+    // Atualiza estimativa de tempo periodicamente
+    if (j % update_interval == 0 || j == image_height - 1) {
+        auto current_time = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
+        
+        if (j > 0) {
+            // Calcula tempo estimado restante
+            double progress = (double)j / image_height;
+            double estimated_total = elapsed / progress;
+            int estimated_remaining = (int)(estimated_total - elapsed);
+            
+            int remaining_hours = estimated_remaining / 3600;
+            int remaining_minutes = (estimated_remaining % 3600) / 60;
+            int remaining_seconds = estimated_remaining % 60;
+            
+            std::clog << "\rProgresso: " 
+                      << (int)(progress * 100) << "% | "
+                      << "Scanlines restantes: " << (image_height - j) << " | "
+                      << "Tempo decorrido: " << (elapsed / 60) << "m " << (elapsed % 60) << "s | "
+                      << "Estimativa restante: ";
+            
+            if (remaining_hours > 0) {
+                std::clog << remaining_hours << "h ";
             }
+            if (remaining_minutes > 0 || remaining_hours > 0) {
+                std::clog << remaining_minutes << "m ";
+            }
+            std::clog << remaining_seconds << "s" << std::flush;
+        } else {
+            std::clog << "\rScanlines restantes: " << (image_height - j) << " | "
+                      << "Calculando estimativa..." << std::flush;
         }
+    }
+    
+    for (int i = 0; i < image_width; i++) {
+        color pixel_color(0,0,0);
+        for (int sample = 0; sample < samples_per_pixel; sample++) {
+            ray r = get_ray(i, j);
+            pixel_color += ray_color(r, max_depth, world);
+        }
+        write_color(std::cout, pixel_samples_scale * pixel_color);
+    }
+}
 
-        std::clog << "\rDone.                 \n";
+// Tempo final
+auto end_time = std::chrono::high_resolution_clock::now();
+auto total_elapsed = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time).count();
+int total_hours = total_elapsed / 3600;
+int total_minutes = (total_elapsed % 3600) / 60;
+int total_seconds_final = total_elapsed % 60;
+
+std::clog << "\n\nRender concluído! ";
+std::clog << "Tempo total: ";
+if (total_hours > 0) {
+    std::clog << total_hours << "h ";
+}
+if (total_minutes > 0 || total_hours > 0) {
+    std::clog << total_minutes << "m ";
+}
+std::clog << total_seconds_final << "s\n";
+
+// Estatísticas adicionais
+long long total_rays = (long long)image_width * image_height * samples_per_pixel;
+std::clog << "Total de raios calculados: " << total_rays << "\n";
+if (total_elapsed > 0) {
+    std::clog << "Raios por segundo: " 
+              << (int)(total_rays / (double)total_elapsed) << "\n";
+}
     }
 
     
@@ -138,7 +202,7 @@ class camera {
 
         vec3 unit_direction = unit_vector(r.direction());
         auto a = 0.5*(unit_direction.y() + 1.0);
-        return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.5, 0.7, 1.0);
+        return (1.0-a)*color(1.0, 1.0, 1.0) + a*color(0.7, 0.8, 1.2);
     }
 };
 
